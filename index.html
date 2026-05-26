@@ -35,7 +35,7 @@
             border-radius: 10px;
         }
 
-        /* loader */
+        /* LOADER - FIXED: no loop, proper hide */
         .loader {
             position: fixed;
             top: 0;
@@ -47,7 +47,12 @@
             justify-content: center;
             align-items: center;
             z-index: 10000;
-            transition: opacity 0.8s, visibility 0.8s;
+            transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+            pointer-events: none;
+        }
+        .loader.hide {
+            opacity: 0;
+            visibility: hidden;
         }
         .loader-text {
             font-size: 3rem;
@@ -60,13 +65,13 @@
             animation: pulseLoader 1.2s infinite;
         }
         @keyframes pulseLoader {
-            0%, 100% { opacity: 0.3; letter-spacing: 8px; }
+            0%, 100% { opacity: 0.4; letter-spacing: 8px; }
             50% { opacity: 1; letter-spacing: 12px; }
         }
 
         .site {
             opacity: 0;
-            animation: siteReveal 1s ease-out 0.3s forwards;
+            animation: siteReveal 0.8s ease-out 0.2s forwards;
         }
         @keyframes siteReveal {
             to { opacity: 1; }
@@ -861,7 +866,6 @@
     let wishlist = [];
     
     // Verification state
-    let pendingCheckout = false;
     let verificationMethod = 'email';
     let storedCode = null;
     let codeExpiry = null;
@@ -896,7 +900,7 @@
         return 'USD';
     }
 
-    // ========== VERIFICATION SYSTEM (AUTOMATED MESSAGE SIMULATION) ==========
+    // ========== VERIFICATION SYSTEM (AUTOMATED MESSAGE) ==========
     function generateCode() {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
@@ -904,15 +908,15 @@
     function sendVerificationCode(method, contact) {
         const code = generateCode();
         storedCode = code;
-        codeExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+        codeExpiry = Date.now() + 5 * 60 * 1000;
         
         // SIMULATED AUTOMATED MESSAGE
         if (method === 'email') {
-            console.log(`[AUTOMATED EMAIL] To: ${contact} | Your CNTRY_ verification code: ${code} | Valid for 5 minutes.`);
-            alert(`📧 SIMULATED EMAIL SENT to ${contact}\n\nVerification Code: ${code}\n(For demo purposes - in production, this would be sent automatically)`);
+            console.log(`[AUTOMATED EMAIL] To: ${contact} | Your CNTRY_ verification code: ${code}`);
+            alert(`📧 SIMULATED EMAIL SENT to ${contact}\n\nVerification Code: ${code}\n(Valid for 5 minutes)`);
         } else {
-            console.log(`[AUTOMATED SMS] To: ${contact} | Your CNTRY_ verification code: ${code} | Valid for 5 minutes.`);
-            alert(`📱 SIMULATED SMS SENT to ${contact}\n\nVerification Code: ${code}\n(For demo purposes - in production, this would be sent automatically)`);
+            console.log(`[AUTOMATED SMS] To: ${contact} | Your CNTRY_ verification code: ${code}`);
+            alert(`📱 SIMULATED SMS SENT to ${contact}\n\nVerification Code: ${code}\n(Valid for 5 minutes)`);
         }
         
         startCountdown(300);
@@ -1025,6 +1029,16 @@
         if (existing) existing.quantity += 1;
         else cart.push({ id: product.id, name: product.name, size: size, priceRaw: priceRaw, priceUSD: product.priceUSD, image: product.image, quantity: 1 });
         updateCartUI();
+        showAddFeedback();
+    }
+
+    function showAddFeedback() {
+        const btn = event?.target;
+        if(btn && btn.classList.contains('add-to-cart')) {
+            const original = btn.innerText;
+            btn.innerText = '✓ added';
+            setTimeout(() => btn.innerText = original, 800);
+        }
     }
 
     function updateCartUI() {
@@ -1081,7 +1095,6 @@
     // ========== CHECKOUT WITH VERIFICATION ==========
     function initiateCheckout() {
         if (cart.length === 0) { alert('Your cart is empty'); return; }
-        pendingCheckout = true;
         const verifyModal = document.getElementById('verifyModal');
         const verifyInput = document.getElementById('verifyInput');
         const codeInputGroup = document.getElementById('codeInputGroup');
@@ -1093,6 +1106,7 @@
         sendBtn.style.display = 'block';
         document.getElementById('timerDisplay').innerHTML = '';
         if (countdownInterval) clearInterval(countdownInterval);
+        storedCode = null;
         
         verifyModal.classList.add('active');
     }
@@ -1102,7 +1116,6 @@
         cart = [];
         updateCartUI();
         document.getElementById('cartModal').classList.remove('active');
-        pendingCheckout = false;
     }
 
     // ========== EVENT LISTENERS ==========
@@ -1152,7 +1165,7 @@
     document.getElementById('closeVerifyBtn').onclick = () => {
         document.getElementById('verifyModal').classList.remove('active');
         if (countdownInterval) clearInterval(countdownInterval);
-        pendingCheckout = false;
+        storedCode = null;
     };
     
     document.getElementById('shopNowBtn').onclick = () => document.querySelector('.products').scrollIntoView({ behavior: 'smooth' });
@@ -1170,878 +1183,18 @@
         else document.getElementById('navbar').classList.remove('scrolled');
     });
     
-    window.addEventListener('load', () => {
-        setTimeout(() => { document.getElementById('loader').style.opacity = '0'; document.getElementById('loader').style.visibility = 'hidden'; }, 600);
-        setCurrency(detectUserCurrency());
+    // FIXED: Loader hides properly after page loads + small delay for animation
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            const loader = document.getElementById('loader');
+            loader.classList.add('hide');
+        }, 800);
     });
     
+    // Initialize
+    setCurrency(detectUserCurrency());
     renderProducts();
     updateWishlistUI();
-</script>
-</body>
-</html>            letter-spacing: 6px;
-            color: #c0c0c0;
-            margin-bottom: 1rem;
-        }
-        .hero-content h1 {
-            font-size: 7rem;
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            background: linear-gradient(135deg, #ffffff, #b0b0b0, #888);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            line-height: 0.95;
-        }
-        .hero-content p {
-            font-size: 1rem;
-            max-width: 500px;
-            margin: 1.5rem auto;
-            color: #aaa;
-        }
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #b0b0b0, #707070);
-            border: none;
-            padding: 1rem 2.5rem;
-            font-weight: 600;
-            color: #000;
-            border-radius: 60px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            filter: brightness(1.1);
-        }
-        .btn-outline {
-            background: transparent;
-            border: 1.5px solid #a0a0a0;
-            padding: 1rem 2.5rem;
-            font-weight: 600;
-            color: #ddd;
-            border-radius: 60px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn-outline:hover {
-            background: rgba(192,192,192,0.1);
-            transform: translateY(-3px);
-        }
-
-        /* marquee */
-        .marquee {
-            background: #050505;
-            padding: 0.9rem 0;
-            overflow: hidden;
-            border-top: 1px solid #222;
-            border-bottom: 1px solid #222;
-        }
-        .marquee-content {
-            display: flex;
-            white-space: nowrap;
-            animation: marqueeScroll 22s linear infinite;
-            gap: 2rem;
-        }
-        .marquee-content span {
-            font-size: 0.75rem;
-            letter-spacing: 4px;
-            color: #a0a0a0;
-            text-transform: uppercase;
-        }
-        @keyframes marqueeScroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
-        /* products grid */
-        .products {
-            padding: 6rem 6%;
-            background: #0a0a0a;
-        }
-        .section-header {
-            text-align: center;
-            margin-bottom: 3.5rem;
-        }
-        .section-header h2 {
-            font-size: 2.8rem;
-            font-weight: 600;
-            background: linear-gradient(125deg, #fff, #a0a0a0);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .product-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2.5rem;
-            justify-content: center;
-        }
-        .product-card {
-            flex: 1 1 300px;
-            max-width: 360px;
-            background: #0f0f0f;
-            border-radius: 28px;
-            overflow: hidden;
-            border: 1px solid rgba(192,192,192,0.15);
-            transition: all 0.4s ease;
-            backdrop-filter: blur(4px);
-        }
-        .product-card:hover {
-            transform: translateY(-10px);
-            border-color: rgba(192,192,192,0.5);
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.8);
-        }
-        .product-img {
-            width: 100%;
-            height: 360px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            background: #080808;
-        }
-        .product-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            transition: transform 0.4s;
-        }
-        .product-card:hover .product-img img {
-            transform: scale(1.02);
-        }
-        .product-info {
-            padding: 1.5rem;
-        }
-        .product-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-        }
-        .price-row {
-            display: flex;
-            gap: 1rem;
-            align-items: baseline;
-            margin: 0.8rem 0;
-            flex-wrap: wrap;
-        }
-        .current-price {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #c0c0c0;
-        }
-        .old-price {
-            font-size: 1rem;
-            color: #666;
-            text-decoration: line-through;
-        }
-        .discount-badge {
-            background: rgba(192,192,192,0.2);
-            padding: 0.2rem 0.8rem;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            color: #c0c0c0;
-            font-weight: 500;
-        }
-        .add-to-cart {
-            width: 100%;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            padding: 0.8rem;
-            border-radius: 60px;
-            color: #ddd;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            margin-top: 0.5rem;
-        }
-        .add-to-cart:hover {
-            background: #c0c0c0;
-            color: #000;
-            border-color: #c0c0c0;
-        }
-
-        /* cart modal */
-        .cart-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 2000;
-            display: flex;
-            justify-content: flex-end;
-            visibility: hidden;
-            opacity: 0;
-            transition: 0.3s;
-        }
-        .cart-overlay.active {
-            visibility: visible;
-            opacity: 1;
-        }
-        .cart-panel {
-            width: 420px;
-            max-width: 90%;
-            background: #0c0c0c;
-            height: 100%;
-            padding: 2rem;
-            border-left: 1px solid #2a2a2a;
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%);
-            transition: 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-        }
-        .cart-overlay.active .cart-panel {
-            transform: translateX(0);
-        }
-        .cart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #222;
-        }
-        .cart-header h3 {
-            font-size: 1.5rem;
-            font-weight: 500;
-            color: #c0c0c0;
-        }
-        .close-cart {
-            font-size: 1.8rem;
-            cursor: pointer;
-            color: #999;
-        }
-        .cart-items {
-            flex: 1;
-            overflow-y: auto;
-        }
-        .cart-item {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #1a1a1a;
-        }
-        .cart-item-img {
-            width: 70px;
-            height: 70px;
-            background: #111;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .cart-item-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        .cart-item-details {
-            flex: 1;
-        }
-        .cart-item-title {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .cart-item-price {
-            color: #c0c0c0;
-            font-size: 0.85rem;
-        }
-        .cart-item-remove {
-            background: none;
-            border: none;
-            color: #666;
-            cursor: pointer;
-            font-size: 0.7rem;
-        }
-        .cart-total {
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid #222;
-            display: flex;
-            justify-content: space-between;
-            font-weight: 700;
-            font-size: 1.2rem;
-        }
-        .checkout-btn {
-            background: #c0c0c0;
-            color: #000;
-            border: none;
-            padding: 1rem;
-            border-radius: 60px;
-            font-weight: 700;
-            margin-top: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .checkout-btn:hover {
-            background: #e0e0e0;
-        }
-        .empty-cart {
-            text-align: center;
-            color: #666;
-            padding: 2rem;
-        }
-
-        /* editorial section */
-        .editorial {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            background: #050505;
-            border-top: 1px solid #1c1c1c;
-            border-bottom: 1px solid #1c1c1c;
-        }
-        .editorial-text {
-            padding: 4rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .editorial-text h3 {
-            font-size: 2.2rem;
-            margin-bottom: 1rem;
-        }
-        .editorial-text .silver {
-            color: #c0c0c0;
-        }
-        .editorial-gallery {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            padding: 2rem;
-        }
-        .mini-card {
-            width: 160px;
-            height: 220px;
-            background: #101010;
-            border-radius: 24px;
-            overflow: hidden;
-            padding: 0.8rem;
-            border: 1px solid #2a2a2a;
-        }
-        .mini-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        /* newsletter */
-        .newsletter {
-            padding: 4rem 6%;
-            text-align: center;
-            background: #070707;
-        }
-        .newsletter h4 {
-            font-size: 1.8rem;
-            font-weight: 500;
-        }
-        .newsletter span {
-            color: #c0c0c0;
-        }
-        .news-form {
-            display: flex;
-            justify-content: center;
-            gap: 0.8rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-        .news-form input {
-            background: #111;
-            border: 1px solid #2a2a2a;
-            padding: 1rem 1.5rem;
-            width: 280px;
-            border-radius: 60px;
-            color: white;
-        }
-        .news-form button {
-            background: #c0c0c0;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 60px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        footer {
-            padding: 2rem;
-            text-align: center;
-            font-size: 0.7rem;
-            color: #5a5a5a;
-            border-top: 0.5px solid #1c1c1c;
-        }
-
-        /* currency indicator badge */
-        .currency-badge {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            padding: 6px 14px;
-            border-radius: 40px;
-            font-size: 0.7rem;
-            border: 1px solid rgba(192,192,192,0.3);
-            color: #c0c0c0;
-            z-index: 999;
-            pointer-events: none;
-            font-weight: 500;
-        }
-
-        @media (max-width: 800px) {
-            .hero-content h1 { font-size: 3.5rem; }
-            .editorial { grid-template-columns: 1fr; }
-            .product-img { height: 280px; }
-            .navbar { flex-direction: column; align-items: stretch; }
-            .nav-right { justify-content: space-between; }
-            .nav-links { justify-content: center; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="loader" id="loader">
-    <div class="loader-text">CNTRY_</div>
-</div>
-
-<div class="site">
-    <div class="navbar" id="navbar">
-        <div class="logo">CNTRY_</div>
-        <div class="nav-right">
-            <div class="nav-links">
-                <a href="#">HOME</a>
-                <a href="#">SHOP</a>
-                <a href="#">ARCHIVE</a>
-            </div>
-            <div class="currency-selector">
-                <span>💰</span>
-                <select id="currencySelect">
-                    <option value="USD">USD ($)</option>
-                    <option value="PHP">PHP (₱)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                </select>
-            </div>
-            <div class="cart-icon" id="cartIcon">
-                <span>🛒</span>
-                <span class="cart-count" id="cartCount">0</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="hero">
-        <div class="hero-content">
-            <div class="hero-badge">MATTE BLACK // SILVER LABEL</div>
-            <h1>CNTRY_<br>AW25</h1>
-            <p>Limited units. Raw aesthetic. Silver accents.</p>
-            <div class="hero-buttons">
-                <button class="btn-primary" id="shopNowBtn">SHOP DROP →</button>
-                <button class="btn-outline" id="filmBtn">WATCH FILM</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="marquee">
-        <div class="marquee-content">
-            <span>✦ 20% OFF SITEWIDE ✦ FREE SHIPPING ✦ SILVER MEMBERSHIP ✦</span>
-            <span>✦ 20% OFF SITEWIDE ✦ FREE SHIPPING ✦ SILVER MEMBERSHIP ✦</span>
-        </div>
-    </div>
-
-    <div class="products">
-        <div class="section-header">
-            <h2>— core collection —</h2>
-        </div>
-        <div class="product-grid" id="productGrid">
-            <!-- products will be injected here -->
-        </div>
-    </div>
-
-    <div class="editorial">
-        <div class="editorial-text">
-            <h3>matte black <span class="silver">// silver codex</span></h3>
-            <p>Limited edition drop. Each piece features raw edges, silver-tone hardware, and premium heavy-weight cotton. Designed for the underground.</p>
-            <button id="manifestoBtn" style="background:none; border:none; color:#c0c0c0; text-align:left; cursor:pointer; border-bottom:1px solid #c0c0c0; width:fit-content;">read manifesto →</button>
-        </div>
-        <div class="editorial-gallery">
-            <div class="mini-card"><img src="https://i.imgur.com/2k7Jsok.png" alt="hoodie"></div>
-            <div class="mini-card"><img src="https://i.imgur.com/kvNDYJZ.png" alt="new sweatshirt"></div>
-        </div>
-    </div>
-
-    <div class="newsletter">
-        <h4>join the <span>silver</span> list</h4>
-        <p style="color:#777">early access + exclusive discounts</p>
-        <div class="news-form">
-            <input type="email" placeholder="email" id="newsEmail">
-            <button id="newsBtn">subscribe</button>
-        </div>
-    </div>
-
-    <footer>
-        <p>© 2025 CNTRY_ — matte black / silver archive</p>
-    </footer>
-</div>
-
-<!-- cart modal -->
-<div class="cart-overlay" id="cartOverlay">
-    <div class="cart-panel">
-        <div class="cart-header">
-            <h3>silver cart</h3>
-            <span class="close-cart" id="closeCartBtn">✕</span>
-        </div>
-        <div class="cart-items" id="cartItemsList">
-            <div class="empty-cart">your cart is empty</div>
-        </div>
-        <div class="cart-total">
-            <span>total</span>
-            <span id="cartTotalPrice">$0</span>
-        </div>
-        <button class="checkout-btn" id="checkoutBtn">checkout →</button>
-    </div>
-</div>
-
-<div class="currency-badge" id="currencyBadge">USD 🇺🇸</div>
-
-<script>
-    // Product catalog with fake discounts
-    const products = [
-        {
-            id: 1,
-            name: "OVERDYED RELIC HOODIE",
-            priceUSD: 148,
-            pricePHP: 8450,
-            priceEUR: 135,
-            priceGBP: 115,
-            oldPriceUSD: 185,
-            oldPricePHP: 10560,
-            oldPriceEUR: 169,
-            oldPriceGBP: 144,
-            discount: "20% OFF",
-            image: "https://i.imgur.com/2k7Jsok.png"
-        },
-        {
-            id: 2,
-            name: "CARGO UTILITY PANT",
-            priceUSD: 128,
-            pricePHP: 7300,
-            priceEUR: 117,
-            priceGBP: 100,
-            oldPriceUSD: 160,
-            oldPricePHP: 9130,
-            oldPriceEUR: 146,
-            oldPriceGBP: 125,
-            discount: "20% OFF",
-            image: "https://i.imgur.com/rxJIfz3.png"
-        },
-        {
-            id: 3,
-            name: "SILVER EDITION SWEATSHIRT",
-            priceUSD: 158,
-            pricePHP: 9020,
-            priceEUR: 145,
-            priceGBP: 123,
-            oldPriceUSD: 198,
-            oldPricePHP: 11300,
-            oldPriceEUR: 181,
-            oldPriceGBP: 154,
-            discount: "20% OFF",
-            image: "https://i.imgur.com/kvNDYJZ.png"
-        }
-    ];
-
-    // Currency rates & symbols
-    const currencyConfig = {
-        USD: { symbol: '$', rate: 1, flag: '🇺🇸', name: 'USD' },
-        PHP: { symbol: '₱', rate: 57.5, flag: '🇵🇭', name: 'PHP' },
-        EUR: { symbol: '€', rate: 0.92, flag: '🇪🇺', name: 'EUR' },
-        GBP: { symbol: '£', rate: 0.79, flag: '🇬🇧', name: 'GBP' }
-    };
-
-    let currentCurrency = 'USD';
-    let cart = [];
-
-    // DOM elements
-    const productGrid = document.getElementById('productGrid');
-    const cartCountSpan = document.getElementById('cartCount');
-    const cartOverlay = document.getElementById('cartOverlay');
-    const cartItemsList = document.getElementById('cartItemsList');
-    const cartTotalPriceSpan = document.getElementById('cartTotalPrice');
-    const cartIcon = document.getElementById('cartIcon');
-    const closeCartBtn = document.getElementById('closeCartBtn');
-    const currencySelect = document.getElementById('currencySelect');
-    const currencyBadge = document.getElementById('currencyBadge');
-
-    // Currency detection based on IP (simulated with browser language + timezone + extended detection)
-    function detectUserCountry() {
-        return new Promise((resolve) => {
-            // Try to detect via timezone and language
-            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const language = navigator.language;
-            
-            // PH detection: timezone includes Manila or language includes fil/tl
-            if (timezone.includes('Manila') || timezone.includes('Philippines') || language.includes('fil') || language.includes('tl')) {
-                resolve('PHP');
-            }
-            // Europe detection
-            else if (timezone.includes('London') || timezone.includes('Paris') || timezone.includes('Berlin') || 
-                     timezone.includes('Madrid') || timezone.includes('Rome') || language.includes('fr') || 
-                     language.includes('de') || language.includes('es') || language.includes('it')) {
-                resolve('EUR');
-            }
-            // UK specific
-            else if (timezone.includes('London') && language.includes('en-GB')) {
-                resolve('GBP');
-            }
-            // Default to USD
-            else {
-                resolve('USD');
-            }
-        });
-    }
-
-    // Get price based on currency
-    function getFormattedPrice(priceUSD, currency) {
-        let converted = priceUSD;
-        if (currency === 'PHP') converted = priceUSD * currencyConfig.PHP.rate;
-        else if (currency === 'EUR') converted = priceUSD * currencyConfig.EUR.rate;
-        else if (currency === 'GBP') converted = priceUSD * currencyConfig.GBP.rate;
-        else converted = priceUSD;
-        
-        const symbol = currencyConfig[currency].symbol;
-        // Format nicely
-        if (currency === 'PHP') {
-            return `${symbol} ${Math.round(converted).toLocaleString()}`;
-        }
-        return `${symbol}${Math.round(converted)}`;
-    }
-
-    function getRawPrice(priceUSD, currency) {
-        if (currency === 'PHP') return priceUSD * currencyConfig.PHP.rate;
-        if (currency === 'EUR') return priceUSD * currencyConfig.EUR.rate;
-        if (currency === 'GBP') return priceUSD * currencyConfig.GBP.rate;
-        return priceUSD;
-    }
-
-    // Render products with current currency
-    function renderProducts() {
-        productGrid.innerHTML = '';
-        products.forEach(prod => {
-            const currentPriceFormatted = getFormattedPrice(prod.priceUSD, currentCurrency);
-            let oldPriceFormatted = '';
-            if (currentCurrency === 'PHP') oldPriceFormatted = `${currencyConfig.PHP.symbol} ${Math.round(prod.oldPricePHP).toLocaleString()}`;
-            else if (currentCurrency === 'EUR') oldPriceFormatted = `${currencyConfig.EUR.symbol}${Math.round(prod.oldPriceEUR)}`;
-            else if (currentCurrency === 'GBP') oldPriceFormatted = `${currencyConfig.GBP.symbol}${Math.round(prod.oldPriceGBP)}`;
-            else oldPriceFormatted = `$${prod.oldPriceUSD}`;
-            
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.innerHTML = `
-                <div class="product-img">
-                    <img src="${prod.image}" alt="${prod.name}">
-                </div>
-                <div class="product-info">
-                    <div class="product-title">${prod.name}</div>
-                    <div class="price-row">
-                        <span class="current-price">${currentPriceFormatted}</span>
-                        <span class="old-price">${oldPriceFormatted}</span>
-                        <span class="discount-badge">${prod.discount}</span>
-                    </div>
-                    <button class="add-to-cart" data-id="${prod.id}">add to cart →</button>
-                </div>
-            `;
-            productGrid.appendChild(card);
-        });
-
-        document.querySelectorAll('.add-to-cart').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(btn.getAttribute('data-id'));
-                addToCart(id);
-            });
-        });
-    }
-
-    function addToCart(productId) {
-        const product = products.find(p => p.id === productId);
-        if (!product) return;
-        
-        const existingItem = cart.find(item => item.id === productId);
-        const priceValue = getRawPrice(product.priceUSD, currentCurrency);
-        
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            cart.push({
-                id: product.id,
-                name: product.name,
-                priceRaw: priceValue,
-                priceUSD: product.priceUSD,
-                image: product.image,
-                quantity: 1
-            });
-        }
-        updateCartUI();
-        showCartNotification();
-    }
-
-    function updateCartUI() {
-        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-        cartCountSpan.innerText = totalItems;
-        
-        if (cart.length === 0) {
-            cartItemsList.innerHTML = '<div class="empty-cart">your cart is empty</div>';
-            cartTotalPriceSpan.innerText = currencyConfig[currentCurrency].symbol + '0';
-            return;
-        }
-        
-        cartItemsList.innerHTML = '';
-        let total = 0;
-        cart.forEach(item => {
-            const itemTotal = item.priceRaw * item.quantity;
-            total += itemTotal;
-            const symbol = currencyConfig[currentCurrency].symbol;
-            const priceDisplay = currentCurrency === 'PHP' ? `${symbol} ${Math.round(item.priceRaw).toLocaleString()}` : `${symbol}${Math.round(item.priceRaw)}`;
-            
-            const cartItemDiv = document.createElement('div');
-            cartItemDiv.className = 'cart-item';
-            cartItemDiv.innerHTML = `
-                <div class="cart-item-img">
-                    <img src="${item.image}" alt="${item.name}">
-                </div>
-                <div class="cart-item-details">
-                    <div class="cart-item-title">${item.name}</div>
-                    <div class="cart-item-price">${priceDisplay} x ${item.quantity}</div>
-                    <button class="cart-item-remove" data-id="${item.id}">remove</button>
-                </div>
-            `;
-            cartItemsList.appendChild(cartItemDiv);
-        });
-        
-        const totalDisplay = currentCurrency === 'PHP' ? `${currencyConfig[currentCurrency].symbol} ${Math.round(total).toLocaleString()}` : `${currencyConfig[currentCurrency].symbol}${Math.round(total)}`;
-        cartTotalPriceSpan.innerText = totalDisplay;
-        
-        document.querySelectorAll('.cart-item-remove').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(btn.getAttribute('data-id'));
-                removeFromCart(id);
-            });
-        });
-    }
-    
-    function removeFromCart(productId) {
-        const index = cart.findIndex(item => item.id === productId);
-        if (index !== -1) {
-            if (cart[index].quantity > 1) {
-                cart[index].quantity -= 1;
-            } else {
-                cart.splice(index, 1);
-            }
-        }
-        updateCartUI();
-    }
-    
-    function showCartNotification() {
-        const btn = event?.target;
-        if(btn && btn.classList.contains('add-to-cart')) {
-            const originalText = btn.innerText;
-            btn.innerText = '✓ added';
-            setTimeout(() => {
-                btn.innerText = originalText;
-            }, 800);
-        }
-    }
-    
-    // Change currency and refresh everything
-    function setCurrency(currency) {
-        currentCurrency = currency;
-        currencySelect.value = currency;
-        currencyBadge.innerHTML = `${currencyConfig[currency].name} ${currencyConfig[currency].flag}`;
-        
-        // Recalculate cart prices
-        cart = cart.map(item => {
-            return {
-                ...item,
-                priceRaw: getRawPrice(item.priceUSD, currency)
-            };
-        });
-        
-        renderProducts();
-        updateCartUI();
-    }
-    
-    // Event listeners
-    cartIcon.addEventListener('click', () => {
-        cartOverlay.classList.add('active');
-    });
-    closeCartBtn.addEventListener('click', () => {
-        cartOverlay.classList.remove('active');
-    });
-    cartOverlay.addEventListener('click', (e) => {
-        if (e.target === cartOverlay) {
-            cartOverlay.classList.remove('active');
-        }
-    });
-    
-    document.getElementById('checkoutBtn').addEventListener('click', () => {
-        if (cart.length === 0) {
-            alert('your silver cart is empty.');
-        } else {
-            alert(`⚡ order total ${cartTotalPriceSpan.innerText} — thank you for choosing CNTRY_.`);
-            cart = [];
-            updateCartUI();
-            cartOverlay.classList.remove('active');
-        }
-    });
-    
-    document.getElementById('shopNowBtn')?.addEventListener('click', () => {
-        document.querySelector('.products').scrollIntoView({ behavior: 'smooth' });
-    });
-    document.getElementById('filmBtn')?.addEventListener('click', () => {
-        alert('CNTRY_ // SILVER FILM drops next week.');
-    });
-    document.getElementById('manifestoBtn')?.addEventListener('click', () => {
-        alert('MATTE BLACK MANIFESTO: Silver linings, dark structures. Wear the code.');
-    });
-    document.getElementById('newsBtn')?.addEventListener('click', () => {
-        const email = document.getElementById('newsEmail').value.trim();
-        if (!email || !email.includes('@')) alert('enter valid email.');
-        else {
-            alert(`✓ ${email} — you’re on the silver list.`);
-            document.getElementById('newsEmail').value = '';
-        }
-    });
-    
-    currencySelect.addEventListener('change', (e) => {
-        setCurrency(e.target.value);
-    });
-    
-    // navbar scroll
-    window.addEventListener('scroll', () => {
-        const nav = document.getElementById('navbar');
-        if (window.scrollY > 40) nav.classList.add('scrolled');
-        else nav.classList.remove('scrolled');
-    });
-    
-    // loader + currency detection
-    window.addEventListener('load', async () => {
-        setTimeout(() => {
-            const loader = document.getElementById('loader');
-            loader.style.opacity = '0';
-            loader.style.visibility = 'hidden';
-        }, 600);
-        
-        // Detect user country and set currency
-        const detectedCurrency = await detectUserCountry();
-        setCurrency(detectedCurrency);
-    });
-    
-    renderProducts();
 </script>
 </body>
 </html>
